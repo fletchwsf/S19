@@ -1,0 +1,92 @@
+package engine
+public
+	
+with ARP4761, EMV2;
+with errorModelLibrary;
+
+with generator;
+
+bus mechPower
+end mechPower;
+
+bus implementation mechPower.i
+end mechPower.i;
+
+bus DCPower
+end DCPower;
+
+bus implementation DCPower.i
+end DCPower.i;
+
+system engine
+	features
+		mechPowerDist : provides bus access;
+	annex EMV2 {**
+	use types errorLibrary;
+	use behavior errorLibrary::failStop;
+--	use types errorModelLibrary;
+--	use behavior errorModelLibrary::twoState;
+		error propagations
+				mechPowerDist: out propagation {serviceOmission};
+			flows
+				es1: error source mechPowerDist {serviceOmission} when failStop;  
+		end propagations;
+		component error behavior
+			events
+				selfFail: error event {serviceOmission};
+			transitions
+				t1: operational -[selfFail]-> failStop;
+		end component;
+		properties			
+			EMV2::severity => ARP4761::Minor applies to failStop;
+			ARP4761::hazards => 
+			([
+				description => "Engine shutdown with loss of engine services";
+				environment => "All";
+				failure => "Engine shutdown";
+				failureEffect => "Loss engine services: thurst, bleed air, hydraulic power and electrical power";
+				phases => ("All");
+				comment => "Single engine shutdown has minor impact on aircraft operation";
+			])
+			applies to failStop;
+	**};
+end engine;	
+
+system implementation engine.i
+end engine.i;
+
+
+system AssemblyType1
+	features
+		DCOut1 : provides bus access;
+end AssemblyType1;
+
+system implementation AssemblyType1.i
+	subcomponents
+		generatorA : device generator::generator.i;
+		powerPlant : system engine.i;
+	connections
+		ct1 : bus access powerPlant.mechPowerDist -> generatorA.mechPowerIn;
+		ct2: bus access generatorA.DCOut -> DCOut1;
+	annex EMV2 {**
+		use types errorLibrary;
+		use behavior errorLibrary::failStop; 
+	**};
+end AssemblyType1.i;
+
+system AssemblyType2 extends AssemblyType1
+	features
+		DCOut2 : provides bus access;
+end AssemblyType2;
+
+system implementation AssemblyType2.i extends AssemblyType1.i
+	subcomponents
+		generatorB : device generator::generator.i;
+	connections
+		ct3: bus access powerPlant.mechPowerDist -> generatorB.mechPowerIn;
+		ct4 : bus access generatorB.DCOut -> DCout2; 
+end AssemblyType2.i;
+
+
+
+end engine;

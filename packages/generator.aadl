@@ -1,0 +1,41 @@
+package generator
+public
+	
+with EMV2;
+with ARP4761;
+	
+device generator
+	features
+		mechPowerIn : requires bus access;
+		DCOut: provides bus access;
+	annex EMV2{**
+		use types errorLibrary;
+		use behavior errorLibrary::failStop;
+		error propagations
+				DCOut : out propagation {serviceOmission};
+				mechPowerIn : in propagation {serviceOmission};
+			flows
+				es1: error source DCOut{serviceOmission} when failStop;
+				es2: error path mechPowerIn {serviceOmission} -> DCOut {serviceOmission};
+		end propagations;
+		component error behavior
+			events
+				selfFail : error event {serviceOmission};
+			transitions
+				t1 : operational -[selfFail]-> failStop;
+		end component;
+		properties	
+		ARP4761::hazards =>
+		([
+			description => "Generator failure";
+			failureEffect => "Loss of electrical power";
+		])
+		applies to selfFail;
+	**};
+end generator;
+
+device implementation generator.i
+end generator.i;
+
+
+end generator;

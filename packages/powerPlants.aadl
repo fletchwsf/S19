@@ -1,0 +1,53 @@
+package powerPlants
+public
+
+with ARP4761, EMV2;
+
+with engine;
+with errorModelLibrary;
+
+system powerPlants
+	features
+		DCOut1 : provides bus access;
+		DCOut2 : provides bus access;
+		DCOut3 : provides bus access;
+		DCOut4 : provides bus access;
+end powerPlants;
+
+system implementation powerPlants.i
+	subcomponents
+		engine1 : system engine::AssemblyType1.i;
+		engine2 : system engine::AssemblyType2.i;
+		engine3 : system engine::AssemblyType1.i;
+	connections
+		new_connection: bus access engine1.DCOut1 -> DCOut1;
+		new_connection2: bus access engine2.DCOut1 -> DCOut2;
+		new_connection3: bus access engine2.DCOut2 -> DCOut3;
+		new_connection4: bus access engine3.DCOut1 -> DCOut4;
+	annex EMV2{**
+	use types errorLibrary;
+	use behavior errorLibrary::failStop;
+--		use types errorModelLibrary;
+--		use behavior statesWithCriticality;
+		composite error behavior
+			states
+			[ engine1.failstop and engine2.failstop and engine3.failstop ]-> failStop;
+		end composite;
+		properties
+			-- All engine out condition 
+			EMV2::severity => ARP4761::Catastrophic applies to failStop;
+			ARP4761::hazards => 
+			([
+				description => "All engine out condition";
+				environment => "All";
+				failure => "All engine out with loss of services";
+				failureEffect => "Loss thrust";
+				phases => ("Takeoff, In-flight, Landing");
+				comment => "All engine inoperative with possible progression to forced landing";
+			])
+			applies to failStop;
+	**};
+end powerPlants.i;
+	
+
+end powerPlants;
