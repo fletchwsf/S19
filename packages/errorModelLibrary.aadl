@@ -195,7 +195,33 @@ transitions
 	RecoveryTransition : Failed-[Recovery]->(Operational with EMV2::RecoveryFailureRatio, FailStop with others);
 end behavior;
 
-
+error behavior twoState
+	events
+		Failure: error event;
+	states
+		Operational : initial state;
+		Failed      : state;
+	transitions
+		t1: Operational -[failure]-> Failed;
+	end behavior;
+	
+error behavior statesWithCriticality
+		events
+			failure : error event;
+		states
+			Operational : initial state;
+			failedCatastrophic : state;
+			failedHazardous : state;
+			failedMajor : state;
+			failedMinor : state;
+			failedNoEffect : state;
+		transitions
+			t1: Operational -[failure]-> failedCatastrophic;
+			t2: Operational -[failure]-> failedHazardous;
+			t3: Operational -[failure]-> failedMajor;
+			t4: Operational -[failure]-> failedMinor;
+			t5: Operational -[failure]-> failedNoEffect;
+end behavior;
 	
 **}; 
 
